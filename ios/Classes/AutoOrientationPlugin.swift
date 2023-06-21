@@ -24,6 +24,16 @@ public class AutoOrientationPlugin: NSObject, FlutterPlugin {
     func setOrientation(_ call: FlutterMethodCall) {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
             else { return }
+        
+        let resolvedMask = getOrientation(call)
+        AutoOrientation.defaultOrientation = resolvedMask
+        
+        windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: resolvedMask)) { error in
+            // TODO: Perhaps call back to Flutter with an error
+        }
+    }
+    
+    func getOrientation(_ call: FlutterMethodCall) ->UIInterfaceOrientationMask{
         let resolvedMask: UIInterfaceOrientationMask
         switch call.method {
         case "setLandscapeRight", "setLandscapeAuto":
@@ -38,12 +48,13 @@ public class AutoOrientationPlugin: NSObject, FlutterPlugin {
             resolvedMask = UIInterfaceOrientationMask.all
             break
         }
-        windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: resolvedMask)) { error in
-            // TODO: Perhaps call back to Flutter with an error
-        }
+        return resolvedMask
     }
     
     func setLegacyOrientation(_ call: FlutterMethodCall) {
+        let resolvedMask = getOrientation(call)
+        AutoOrientation.defaultOrientation = resolvedMask
+        
         let resolvedOrientation: UIInterfaceOrientation
         switch call.method {
         case "setLandscapeRight", "setLandscapeAuto":
@@ -58,6 +69,12 @@ public class AutoOrientationPlugin: NSObject, FlutterPlugin {
             resolvedOrientation = UIInterfaceOrientation.unknown
             break
         }
+        
         UIDevice.current.setValue(resolvedOrientation.rawValue, forKey: "orientation")
     }
+}
+
+
+public class AutoOrientation {
+    public static var defaultOrientation: UIInterfaceOrientationMask = .all
 }
